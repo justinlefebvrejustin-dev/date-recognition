@@ -12,18 +12,19 @@ CORS(app)
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 genai.configure(api_key=GEMINI_API_KEY)
 
-# HIER IS DE FIX: 3 routes voor dezelfde functie
+# --- LET OP: GEEN ROUTE VOOR '/' HIERONDER ---
+
 @app.route('/api/analyze', methods=['GET', 'POST'])
-@app.route('/analyze', methods=['GET', 'POST'])
 def analyze():
-    # Even checken of het een GET request is (voor testen in browser)
+    # Als iemand dit via de browser probeert te openen (GET request)
     if request.method == 'GET':
-        return jsonify({"status": "API is online! Gebruik POST om te scannen."})
+        return "IK BEN WAKKER - API WERKT (Maar ga terug naar de homepage!)"
 
     try:
         data = request.json
+        # Check of er data is
         if not data or 'image' not in data:
-            return jsonify({'error': 'Geen afbeelding ontvangen'}), 400
+            return jsonify({'error': 'No image data'}), 400
             
         image_data = data['image'].split(',')[1]
         product_name = data.get('product', 'Product')
@@ -35,32 +36,21 @@ def analyze():
         
         prompt = f"""
         Dit is een: {product_name}.
-        Zoek de houdbaarheidsdatum (EXP/BBE/THT).
-        
-        INSTRUCTIES:
-        1. Datum gevonden? -> Schrijf ALLEEN de datum in Engelse woorden (bijv: "12 March 2025").
-           Noem NIET de productnaam.
-        
-        2. Geen datum? -> Antwoord EXACT: "Geen datum gevonden".
+        Zoek de houdbaarheidsdatum.
+        Datum gevonden? -> Schrijf ALLEEN de datum in Engels (12 March 2025).
+        Geen datum? -> "Geen datum gevonden".
         """
         
         response = model.generate_content([prompt, img])
         result_text = response.text.strip()
         
         if "Geen datum gevonden" in result_text:
-            return jsonify({
-                'date_found': False,
-                'speech_text': f"No date found."
-            })
+            return jsonify({'date_found': False, 'speech_text': "No date found."})
         else:
-            return jsonify({
-                'date_found': True,
-                'date': result_text,
-                'speech_text': f"The date is {result_text}"
-            })
+            return jsonify({'date_found': True, 'date': result_text, 'speech_text': f"Date is {result_text}"})
             
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-if __name__ == '__main__':
-    app.run()
+# Dit is nodig voor Vercel
+app = app

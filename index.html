@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -205,45 +205,47 @@
 </head>
 <body>
     <div class="container">
-        <h1>Datum Scanner</h1>
-        <p class="subtitle">Scan verpakkingen om houdbaarheidsdatum te herkennen via spraak</p>
+        <h1>Date Recognition</h1>
+        <p class="subtitle">Scan packaging to recognize expiration dates via voice</p>
 
         <div id="status" class="status info">
-            Modellen aan het laden...
+            Loading models...
         </div>
 
         <div id="video-container">
             <video id="video" autoplay playsinline></video>
         </div>
 
-        <button id="startBtn" style="display:none;">Camera starten</button>
-        <button id="captureBtn">Product scannen</button>
+        <button id="startBtn" style="display:none;">Start Camera</button>
+        <button id="captureBtn">Scan Product</button>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p>Bezig met analyseren...</p>
+            <p>Analyzing...</p>
         </div>
 
         <div class="result-container" id="result">
-            <img id="preview-img" alt="Gescande foto">
+            <img id="preview-img" alt="Scanned photo">
             <div class="result-text" id="result-text"></div>
         </div>
     </div>
 
     <div class="footer">
-        Gemaakt voor betere toegankelijkheid
+        Created for better accessibility
     </div>
 
     <script>
+        // JOUW GOOGLE MODEL LINK
         const MODEL_URL = 'https://teachablemachine.withgoogle.com/models/hgp4ntk2z/';
         
+        // Vertaalde adviezen naar Engels
         const adviceLibrary = {
-            "Butter": "Dit is boter. Kijk bovenop het deksel.",
-            "Soda can": "Dit is een blikje frisdrank. De datum staat meestal onderaan.",
-            "Slices of meat": "Dit is een verpakking met plakjes vlees. De datum staat meestal bovenop de verpakking.",
-            "Milk": "Dit is melk. De datum staat meestal op de bovenrand of dop.",
-            "Snack": "Dit is een snack. Zoek naar een wit vakje op de achterkant.",
-            "Background": "Ik zie geen product, houd het dichter bij de camera."
+            "Butter": "This is butter. Look on top of the lid.",
+            "Soda can": "This is a soda can. The date is usually at the bottom.",
+            "Slices of meat": "This is sliced meat. The date is usually on top of the package.",
+            "Milk": "This is milk. The date is usually on the top rim or cap.",
+            "Snack": "This is a snack. Look for a white box on the back.",
+            "Background": "I don't see a product, please hold it closer to the camera."
         };
 
         let stream = null;
@@ -273,10 +275,10 @@
                 model = await tmImage.load(modelURL, metadataURL);
                 maxPredictions = model.getTotalClasses();
                 
-                updateStatus('Model geladen! Klik op "Camera starten"', 'success');
+                updateStatus('Model loaded! Click "Start Camera"', 'success');
                 startBtn.style.display = 'block';
             } catch (error) {
-                updateStatus('Fout bij laden model. Controleer de model bestanden.', 'error');
+                updateStatus('Error loading model. Check model files.', 'error');
                 console.error(error);
             }
         }
@@ -290,9 +292,9 @@
                 videoContainer.style.display = 'block';
                 captureBtn.style.display = 'block';
                 startBtn.style.display = 'none';
-                updateStatus('Camera actief - richt op het product', 'success');
+                updateStatus('Camera active - point at the product', 'success');
             } catch (err) {
-                updateStatus('Camera toegang geweigerd. Geef toestemming in je browser.', 'error');
+                updateStatus('Camera access denied. Please allow access in browser.', 'error');
                 console.error(err);
             }
         });
@@ -313,7 +315,7 @@
             videoContainer.style.display = 'none';
             captureBtn.style.display = 'none';
             loading.classList.add('show');
-            updateStatus('Foto gemaakt, aan het analyseren...', 'info');
+            updateStatus('Photo taken, analyzing...', 'info');
 
             try {
                 const img = new Image();
@@ -337,22 +339,22 @@
                 loading.classList.remove('show');
 
                 if (result.date_found) {
-                    resultText.innerHTML = `<strong>Datum gevonden</strong>${result.date}`;
-                    updateStatus('Datum succesvol herkend', 'success');
+                    resultText.innerHTML = `<strong>Date found</strong>${result.date}`;
+                    updateStatus('Date successfully recognized', 'success');
                     speak(result.speech_text);
                 } else {
-                    const advice = adviceLibrary[productName] || "Probeer het product te draaien.";
-                    resultText.innerHTML = `<strong>Geen datum gevonden</strong><div class="advice">💡 ${advice}</div>`;
-                    updateStatus('Geen datum gevonden', 'warning');
-                    speak(`Geen datum gevonden. ${advice}`);
+                    const advice = adviceLibrary[productName] || "Try rotating the product.";
+                    resultText.innerHTML = `<strong>No date found</strong><div class="advice">💡 ${advice}</div>`;
+                    updateStatus('No date found', 'warning');
+                    speak(`No date found. ${advice}`);
                 }
 
                 resultContainer.classList.add('show');
                 startBtn.style.display = 'block';
-                startBtn.textContent = 'Opnieuw scannen';
+                startBtn.textContent = 'Scan again';
             } catch (error) {
                 loading.classList.remove('show');
-                updateStatus('Er ging iets fout. Probeer opnieuw.', 'error');
+                updateStatus('Something went wrong. Try again.', 'error');
                 console.error(error);
                 startBtn.style.display = 'block';
             }
@@ -361,17 +363,18 @@
         function speak(text) {
             if ('speechSynthesis' in window) {
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'nl-NL';
+                // Taal aangepast naar Engels
+                utterance.lang = 'en-US'; 
                 utterance.rate = 0.9;
                 speechSynthesis.speak(utterance);
             }
         }
 
         startBtn.addEventListener('click', () => {
-            if (startBtn.textContent.includes('Opnieuw')) {
+            if (startBtn.textContent.includes('Scan')) {
                 resultContainer.classList.remove('show');
                 previewImg.style.display = 'none';
-                startBtn.textContent = 'Camera starten';
+                startBtn.textContent = 'Start Camera';
             }
         });
 
@@ -379,4 +382,3 @@
     </script>
 </body>
 </html>
-```

@@ -13,7 +13,6 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 genai.configure(api_key=GEMINI_API_KEY)
 
 # HIER IS DE FIX: 3 routes voor dezelfde functie
-@app.route('/', methods=['GET', 'POST'])
 @app.route('/api/analyze', methods=['GET', 'POST'])
 @app.route('/analyze', methods=['GET', 'POST'])
 def analyze():

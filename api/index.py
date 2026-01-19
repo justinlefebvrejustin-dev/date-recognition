@@ -12,10 +12,20 @@ CORS(app)
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 genai.configure(api_key=GEMINI_API_KEY)
 
-@app.route('/api/analyze', methods=['POST'])
+# HIER IS DE FIX: 3 routes voor dezelfde functie
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/api/analyze', methods=['GET', 'POST'])
+@app.route('/analyze', methods=['GET', 'POST'])
 def analyze():
+    # Even checken of het een GET request is (voor testen in browser)
+    if request.method == 'GET':
+        return jsonify({"status": "API is online! Gebruik POST om te scannen."})
+
     try:
         data = request.json
+        if not data or 'image' not in data:
+            return jsonify({'error': 'Geen afbeelding ontvangen'}), 400
+            
         image_data = data['image'].split(',')[1]
         product_name = data.get('product', 'Product')
         
@@ -29,8 +39,7 @@ def analyze():
         Zoek de houdbaarheidsdatum (EXP/BBE/THT).
         
         INSTRUCTIES:
-        1. Datum gevonden? -> Schrijf ALLEEN de datum in Nederlandse woorden.
-           Bijvoorbeeld: "twaalf maart tweeduizend vijfentwintig"
+        1. Datum gevonden? -> Schrijf ALLEEN de datum in Engelse woorden (bijv: "12 March 2025").
            Noem NIET de productnaam.
         
         2. Geen datum? -> Antwoord EXACT: "Geen datum gevonden".
@@ -42,14 +51,17 @@ def analyze():
         if "Geen datum gevonden" in result_text:
             return jsonify({
                 'date_found': False,
-                'speech_text': f"Geen datum gevonden."
+                'speech_text': f"No date found."
             })
         else:
             return jsonify({
                 'date_found': True,
                 'date': result_text,
-                'speech_text': f"De datum is {result_text}"
+                'speech_text': f"The date is {result_text}"
             })
             
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run()
